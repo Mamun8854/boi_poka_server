@@ -99,6 +99,12 @@ async function run() {
       const result = await usersCollection.findOne(query);
       res.send({ isSeller: result?.role === "seller" });
     });
+
+    app.get("/allSeller", async (req, res) => {
+      const query = req.query;
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
   }
 }
