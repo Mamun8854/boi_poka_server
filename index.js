@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -36,6 +37,21 @@ async function run() {
       res.send(result);
     });
 
+    // jwt api
+
+    // app.get("/jwt", async (req, res) => {
+    //   const email = req.query.email;
+    //   const query = { email: email };
+    //   const user = await usersCollection.findOne(query);
+    //   if (user) {
+    //     const token = jwt.sign({ email }, process.env.TOKEN_JWT, {
+    //       expiresIn: "1d",
+    //     });
+    //     return res.send({ accessToken: token });
+    //   }
+    //   res.status(403).send({ accessToken: "" });
+    // });
+
     // books data get and get category wise books api by id
 
     app.get("/category/:id", async (req, res) => {
@@ -49,6 +65,7 @@ async function run() {
 
     app.post("/users", async (req, res) => {
       const user = req.body;
+      console.log(user);
       const userEmail = user.email;
       const query = { email: userEmail };
       const newUser = await usersCollection.find(query).toArray();
@@ -59,6 +76,28 @@ async function run() {
         const result = await usersCollection.insertOne(user);
         res.send(result);
       }
+    });
+
+    // get all users
+
+    app.get("/allUsers", async (req, res) => {
+      const users = {};
+      const result = await usersCollection.find(users).toArray();
+      res.send(result);
+    });
+
+    app.get("/user/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await usersCollection.findOne(query);
+      res.send({ isAdmin: result.role === "admin" });
+    });
+
+    app.get("/user/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await usersCollection.findOne(query);
+      res.send({ isSeller: result.role === "seller" });
     });
   } finally {
   }
