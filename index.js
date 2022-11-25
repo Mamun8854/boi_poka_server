@@ -100,9 +100,27 @@ async function run() {
       res.send({ isSeller: result?.role === "seller" });
     });
 
+    // all seller info for admin dashboard
+
     app.get("/allSeller", async (req, res) => {
       const query = req.query;
       const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // all buyer info for admin dashboard
+
+    app.get("/buyers", async (req, res) => {
+      const query = req.query;
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // add new product to db
+
+    app.post("/new-product", async (req, res) => {
+      const query = req.body;
+      const result = await booksCollection.insertOne(query);
       res.send(result);
     });
   } finally {
