@@ -153,6 +153,14 @@ async function run() {
       const result = await ordersCollection.find(email).toArray();
       res.send(result);
     });
+
+    // delete seller from db
+    app.delete("/allSellers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
