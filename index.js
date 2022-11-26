@@ -143,7 +143,14 @@ async function run() {
     app.get("/my-products", async (req, res) => {
       const email = req.query;
       const result = await booksCollection.find(email).toArray();
-      console.log(result);
+      // console.log(result);
+      res.send(result);
+    });
+
+    // get order info by email
+    app.get("/my-orders", async (req, res) => {
+      const email = req.query;
+      const result = await ordersCollection.find(email).toArray();
       res.send(result);
     });
   } finally {
