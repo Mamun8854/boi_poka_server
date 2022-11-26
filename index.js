@@ -29,6 +29,8 @@ async function run() {
     const booksCollection = client.db("BoiPoka").collection("books");
     // users collection
     const usersCollection = client.db("BoiPoka").collection("users");
+    // orders collection
+    const ordersCollection = client.db("BoiPoka").collection("orders");
     // category data get api
     app.get("/category", async (req, res) => {
       const query = {};
@@ -127,6 +129,21 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await booksCollection.findOne(query);
+      res.send(result);
+    });
+
+    // Order info post
+    app.post("/orders", async (req, res) => {
+      const query = req.body;
+      const result = await ordersCollection.insertOne(query);
+      res.send(result);
+    });
+
+    // my product info
+    app.get("/my-products", async (req, res) => {
+      const email = req.query;
+      const result = await booksCollection.find(email).toArray();
+      console.log(result);
       res.send(result);
     });
   } finally {
