@@ -40,18 +40,49 @@ async function run() {
 
     // jwt api
 
-    // app.get("/jwt", async (req, res) => {
-    //   const email = req.query.email;
-    //   const query = { email: email };
-    //   const user = await usersCollection.findOne(query);
-    //   if (user) {
-    //     const token = jwt.sign({ email }, process.env.TOKEN_JWT, {
-    //       expiresIn: "1d",
-    //     });
-    //     return res.send({ accessToken: token });
-    //   }
-    //   res.status(403).send({ accessToken: "" });
-    // });
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.TOKEN_JWT, {
+          expiresIn: "1d",
+        });
+        return res.send({ accessToken: token });
+      }
+      res.status(403).send({ accessToken: "" });
+    });
+
+    const verifyJWT = (req, res, next) => {
+      const authHeader = req.headers.authorization;
+      // console.log("from jwt token", authHeader);
+      if (!authHeader) {
+        return res.status(401).send("Unauthorized access");
+      }
+
+      const token = authHeader.split(" ")[1];
+      jwt.verify(token, process.env.TOKEN_JWT, function (error, decoded) {
+        if (error) {
+          return res.status(403).send({ message: "Forbidden access" });
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
+
+    // verify admin function
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ message: "From verify Admin Forbidden access" });
+      }
+
+      next();
+    };
 
     // books data get and get category wise books api by id
 
@@ -86,14 +117,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/user/admin/:email", async (req, res) => {
+    app.get("/user/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await usersCollection.findOne(query);
       res.send({ isAdmin: result?.role === "admin" });
     });
 
-    app.get("/user/seller/:email", async (req, res) => {
+    app.get("/user/seller/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await usersCollection.findOne(query);
@@ -102,7 +133,7 @@ async function run() {
 
     // all seller info for admin dashboard
 
-    app.get("/allSeller", async (req, res) => {
+    app.get("/allSeller", verifyJWT, async (req, res) => {
       const query = req.query;
       const result = await usersCollection.find(query).toArray();
       res.send(result);
@@ -110,7 +141,7 @@ async function run() {
 
     // all buyer info for admin dashboard
 
-    app.get("/buyers", async (req, res) => {
+    app.get("/buyers", verifyJWT, async (req, res) => {
       const query = req.query;
       const result = await usersCollection.find(query).toArray();
       res.send(result);
@@ -125,7 +156,7 @@ async function run() {
     });
 
     // get uploaded product in my product page
-    app.get("/my-products/:id", async (req, res) => {
+    app.get("/my-products/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await booksCollection.findOne(query);
@@ -140,7 +171,7 @@ async function run() {
     });
 
     // my product info
-    app.get("/my-products", async (req, res) => {
+    app.get("/my-products", verifyJWT, async (req, res) => {
       const email = req.query;
       const result = await booksCollection.find(email).toArray();
       // console.log(result);
@@ -148,14 +179,14 @@ async function run() {
     });
 
     // get order info by email
-    app.get("/my-orders", async (req, res) => {
+    app.get("/my-orders", verifyJWT, async (req, res) => {
       const email = req.query;
       const result = await ordersCollection.find(email).toArray();
       res.send(result);
     });
 
     // delete seller from db
-    app.delete("/allSellers/:id", async (req, res) => {
+    app.delete("/allSellers/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
@@ -163,14 +194,14 @@ async function run() {
     });
 
     // delete buyer from db
-    app.delete("/allBuyers/:id", async (req, res) => {
+    app.delete("/allBuyers/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     });
     // delete my products from db
-    app.delete("/myProducts-delete/:id", async (req, res) => {
+    app.delete("/myProducts-delete/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await booksCollection.deleteOne(query);
