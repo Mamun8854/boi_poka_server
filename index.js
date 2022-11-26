@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 const { query } = require("express");
@@ -15,7 +15,6 @@ app.use(cors());
 const uri = "mongodb://localhost:27017";
 
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.nuhoilk.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -65,7 +64,6 @@ async function run() {
 
     app.post("/users", async (req, res) => {
       const user = req.body;
-      console.log(user);
       const userEmail = user.email;
       const query = { email: userEmail };
       const newUser = await usersCollection.find(query).toArray();
@@ -121,6 +119,14 @@ async function run() {
     app.post("/new-product", async (req, res) => {
       const query = req.body;
       const result = await booksCollection.insertOne(query);
+      res.send(result);
+    });
+
+    // get uploaded product in my product page
+    app.get("/my-products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await booksCollection.findOne(query);
       res.send(result);
     });
   } finally {
