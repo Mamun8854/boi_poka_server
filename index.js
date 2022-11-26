@@ -169,6 +169,13 @@ async function run() {
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     });
+    // delete my products from db
+    app.delete("/myProducts-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await booksCollection.deleteOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
