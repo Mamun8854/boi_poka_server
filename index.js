@@ -254,6 +254,28 @@ async function run() {
       const result = await booksCollection.deleteOne(query);
       res.send(result);
     });
+
+    // verify seller api
+    app.put("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { email: id };
+      console.log(query);
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          verify: "true",
+        },
+      };
+      const result = await usersCollection.updateOne(query, updatedDoc, option);
+      const result2 = await booksCollection.updateOne(
+        query,
+        updatedDoc,
+        option
+      );
+
+      res.send(result);
+    });
   } finally {
   }
 }
