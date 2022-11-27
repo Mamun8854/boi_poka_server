@@ -22,6 +22,7 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+console.log(uri);
 async function run() {
   try {
     // categories collection
@@ -260,6 +261,7 @@ async function run() {
       const id = req.params.id;
       console.log(id);
       const query = { email: id };
+      const query1 = { sellerEmail: id };
       console.log(query);
       const option = { upsert: true };
       const updatedDoc = {
@@ -268,12 +270,19 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(query, updatedDoc, option);
-      const result2 = await booksCollection.updateOne(
-        query,
+      const result2 = await booksCollection.updateMany(
+        query1,
         updatedDoc,
         option
       );
 
+      res.send(result);
+    });
+
+    // get my buyer
+    app.get("/my-buyer", async (req, res) => {
+      const email = req.query;
+      const result = await ordersCollection.find(email).toArray();
       res.send(result);
     });
   } finally {
