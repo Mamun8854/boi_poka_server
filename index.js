@@ -6,6 +6,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const { query } = require("express");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 // middle Ware
 
@@ -31,6 +32,8 @@ async function run() {
     const usersCollection = client.db("BoiPoka").collection("users");
     // orders collection
     const ordersCollection = client.db("BoiPoka").collection("orders");
+    // payments collection
+    const paymentsCollection = client.db("BoiPoka").collection("payments");
     // category data get api
     app.get("/category", async (req, res) => {
       const query = {};
@@ -84,6 +87,42 @@ async function run() {
       next();
     };
 
+    // payment
+    app.post("/create-payment-intent", async (req, res) => {
+      const orders = req.body;
+      const price = orders.price;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    // post payment info to db
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.orderId;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updatedResult = await ordersCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(result);
+    });
+
     // books data get and get category wise books api by id
 
     app.get("/category/:id", async (req, res) => {
@@ -117,14 +156,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/user/admin/:email", verifyJWT, async (req, res) => {
+    app.get("/user/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await usersCollection.findOne(query);
       res.send({ isAdmin: result?.role === "admin" });
     });
 
-    app.get("/user/seller/:email", verifyJWT, async (req, res) => {
+    app.get("/user/seller/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await usersCollection.findOne(query);
@@ -182,6 +221,14 @@ async function run() {
     app.get("/my-orders", verifyJWT, async (req, res) => {
       const email = req.query;
       const result = await ordersCollection.find(email).toArray();
+      res.send(result);
+    });
+
+    // get order data by id
+    app.get("/my-orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await ordersCollection.findOne(query);
       res.send(result);
     });
 
