@@ -307,6 +307,46 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
+    app.get("/books", async (req, res) => {
+      const query = {};
+      const result = await booksCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // for reported item
+    app.put("/report/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          report: "report",
+        },
+      };
+      const result = await booksCollection.updateOne(query, updatedDoc, option);
+      res.send(result);
+    });
+
+    app.get("/report", async (req, res) => {
+      const id = req.query;
+      const result = await booksCollection.find(id).toArray();
+      res.send(result);
+    });
+    // for advertise item
+    app.put("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          advertise: "true",
+        },
+      };
+      const result = await booksCollection.updateOne(query, updatedDoc, option);
+      res.send(result);
+    });
   } finally {
   }
 }
