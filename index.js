@@ -13,9 +13,9 @@ const stripe = require("stripe")(process.env.STRIPE_KEY);
 app.use(express.json());
 app.use(cors());
 
-const uri = "mongodb://localhost:27017";
+// const uri = "mongodb://localhost:27017";
 
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.nuhoilk.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.nuhoilk.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -259,10 +259,10 @@ async function run() {
     // verify seller api
     app.put("/user/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
+      // console.log(id);
       const query = { email: id };
       const query1 = { sellerEmail: id };
-      console.log(query);
+      // console.log(query);
       const option = { upsert: true };
       const updatedDoc = {
         $set: {
@@ -279,10 +279,32 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const email = { email: id };
+
+      const result = await usersCollection.findOne(email);
+
+      res.send(result);
+    });
     // get my buyer
     app.get("/my-buyer", async (req, res) => {
       const email = req.query;
       const result = await ordersCollection.find(email).toArray();
+      res.send(result);
+    });
+
+    app.put("/books", async (req, res) => {
+      const id = req.query;
+
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          paid: "true",
+        },
+      };
+      const result = await booksCollection.updateOne(id, updatedDoc, option);
+      console.log(result);
       res.send(result);
     });
   } finally {
